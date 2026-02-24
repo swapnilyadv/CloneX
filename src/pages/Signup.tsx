@@ -1,16 +1,39 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/hooks/use-toast";
 
 const Signup = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { signUp } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Will be connected to backend
+
+    if (password !== confirmPassword) {
+      toast({ title: "Error", description: "Passwords do not match", variant: "destructive" });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({ title: "Error", description: "Password must be at least 6 characters", variant: "destructive" });
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await signUp(email, password, username);
+    setLoading(false);
+
+    if (error) {
+      toast({ title: "Signup failed", description: error, variant: "destructive" });
+    } else {
+      toast({ title: "Check your email", description: "We sent you a confirmation link to verify your account." });
+    }
   };
 
   return (
@@ -81,9 +104,10 @@ const Signup = () => {
 
           <button
             type="submit"
-            className="w-full rounded-lg bg-foreground py-2.5 text-sm font-semibold text-background transition-opacity hover:opacity-90"
+            disabled={loading}
+            className="w-full rounded-lg bg-foreground py-2.5 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-50"
           >
-            Create Account
+            {loading ? "Creating account…" : "Create Account"}
           </button>
         </form>
 

@@ -1,6 +1,7 @@
 # CloneX
 
 A modern project built with a focus on clean architecture and best practices.
+just checking the git log working or not 
 
 ## 📋 Overview
 

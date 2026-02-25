@@ -29,6 +29,7 @@ import {
   Paperclip,
   ImageIcon,
   FileText,
+  Menu,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,9 +61,10 @@ const AppDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"recent" | "templates">("recent");
   const [activeNav, setActiveNav] = useState<"home" | "projects" | "settings">("home");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // New State for Creation Panel
-  const [creationTab, setCreationTab] = useState<"build" | "design">("build");
+  const [creationTab, setCreationTab] = useState<"build" | "design" | "components">("build");
   const [selectedModel, setSelectedModel] = useState("GPT-4o");
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [showPlusDropdown, setShowPlusDropdown] = useState(false);
@@ -511,33 +513,50 @@ Brand voice: Professional and minimalist..."
   };
 
   return (
-    <div className="flex min-h-screen bg-[#0B0B0F] text-white font-sans selection:bg-white/10 relative overflow-hidden">
-      {/* Background Dotted Grid - Much more subtle */}
+    <div className="flex min-h-screen bg-black text-white font-sans selection:bg-white/10 relative overflow-x-hidden">
+      {/* Background Dotted Grid - Increased visibility & centered feel */}
       <div 
-        className="absolute inset-0 z-0 pointer-events-none" 
+        className="fixed inset-0 z-0 pointer-events-none" 
         style={{ 
-          backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)`, 
-          backgroundSize: '24px 24px' 
+          backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.2) 1px, transparent 1px)`, 
+          backgroundSize: '24px 24px',
+          backgroundPosition: 'center'
         }} 
       />
       
       <AnimatePresence>
         {renderModal()}
       </AnimatePresence>
+
+      {/* Mobile Backdrop */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[55] md:hidden"
+          />
+        )}
+      </AnimatePresence>
       
       {/* Sidebar */}
-      <aside className="w-64 border-r border-white/[0.06] bg-[#0B0B0F] flex flex-col fixed inset-y-0 left-0 z-50">
-        <div className="p-8">
+      <aside className={`w-64 border-r border-white/[0.06] bg-[#0B0B0F] flex flex-col fixed inset-y-0 left-0 z-[60] transition-transform duration-300 ease-in-out md:translate-x-0 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="p-8 flex items-center justify-between">
           <Link to="/app" className="text-2xl font-bold tracking-tight text-white focus:outline-none">
             Clonex
           </Link>
+          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-2 text-white/40 hover:text-white">
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         <nav className="flex-1 px-4 space-y-1">
           {[
-            { id: "home", icon: Home, label: "Home", action: () => setActiveNav("home") },
-            { id: "projects", icon: FolderKanban, label: "All Projects", action: () => setModalType("projects") },
-            { id: "settings", icon: Settings, label: "Settings", action: () => setModalType("settings") },
+            { id: "home", icon: Home, label: "Home", action: () => { setActiveNav("home"); setIsSidebarOpen(false); } },
+            { id: "projects", icon: FolderKanban, label: "All Projects", action: () => { setModalType("projects"); setIsSidebarOpen(false); } },
+            { id: "settings", icon: Settings, label: "Settings", action: () => { setModalType("settings"); setIsSidebarOpen(false); } },
           ].map((item) => (
             <button
               key={item.id}
@@ -554,9 +573,9 @@ Brand voice: Professional and minimalist..."
           ))}
         </nav>
 
-        <div className="p-6 mt-auto flex flex-col gap-4">
+        <div className="p-6 mb-6 mt-auto flex flex-col gap-4">
           <button
-            onClick={() => setModalType("upgrade")}
+            onClick={() => { setModalType("upgrade"); setIsSidebarOpen(false); }}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/[0.08] transition-all text-white/70 hover:text-white"
           >
             <Zap className="w-4 h-4" />
@@ -564,7 +583,7 @@ Brand voice: Professional and minimalist..."
           </button>
           
           <button
-            onClick={handleLogout}
+            onClick={() => { handleLogout(); setIsSidebarOpen(false); }}
             className="w-full py-2 text-xs font-medium text-white/20 hover:text-red-400/60 transition-colors text-center"
           >
             Sign Out
@@ -573,41 +592,51 @@ Brand voice: Professional and minimalist..."
       </aside>
 
       {/* Main Content */}
-      <main className="ml-64 flex-1 flex flex-col min-h-screen relative overflow-y-auto">
-        <div className="max-w-6xl w-full mx-auto px-12 pt-32 pb-24 flex flex-col justify-center min-h-screen">
+      <main className="md:ml-64 flex-1 flex flex-col min-h-screen relative overflow-x-hidden">
+        {/* Mobile Top Header */}
+        <header className="md:hidden flex items-center justify-between px-6 py-4 border-b border-white/[0.06] bg-[#0B0B0F]/80 backdrop-blur-md sticky top-0 z-40">
+          <Link to="/app" className="text-xl font-bold tracking-tight text-white">
+            Clonex
+          </Link>
+          <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-white/60 hover:text-white bg-white/5 rounded-lg border border-white/10">
+            <Menu className="w-6 h-6" />
+          </button>
+        </header>
+
+        <div className="max-w-6xl w-full mx-auto px-4 md:px-8 lg:px-12 pt-12 md:pt-32 pb-24 flex flex-col justify-center min-h-[calc(100vh-64px)] md:min-h-screen">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
           >
             {/* Centered Creation Card */}
-            <div className="flex flex-col items-center mb-24">
-              <h1 className="text-4xl font-bold tracking-tight text-white mb-12 text-center">
+            <div className="flex flex-col items-center mb-16 md:mb-24">
+              <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white mb-8 md:mb-12 text-center px-4">
                 Create something amazing
               </h1>
               
-              <div className="w-full max-w-3xl bg-[#111115] border border-white/[0.08] rounded-[24px] overflow-hidden shadow-2xl shadow-black/40 transition-all duration-300">
+              <div className="w-full max-w-full md:max-w-3xl bg-[#111115] border border-white/[0.08] rounded-[22px] md:rounded-[24px] overflow-hidden shadow-2xl shadow-black/40 transition-all duration-300">
                 {/* Tabs */}
-                <div className="flex items-center px-4 pt-4 gap-1.5">
+                <div className="flex items-center px-3 md:px-4 pt-4 gap-1 md:gap-1.5 overflow-x-auto no-scrollbar">
                   <button
                     onClick={() => setCreationTab("build")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                      creationTab === "build" 
-                        ? "bg-[#1A1A22] text-white shadow-sm" 
-                        : "text-gray-500 hover:text-gray-400"
+                    className={`whitespace-nowrap px-3 md:px-4 py-2 rounded-lg text-[13px] md:text-sm font-medium transition-all ${
+                      creationTab === "build"
+                        ? "bg-white/[0.06] text-white"
+                        : "text-white/30 hover:text-white hover:bg-white/[0.02]"
                     }`}
                   >
-                    Build
+                    Build from scratch
                   </button>
                   <button
-                    onClick={() => setCreationTab("design")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                      creationTab === "design" 
-                        ? "bg-[#1A1A22] text-white shadow-sm" 
-                        : "text-gray-500 hover:text-gray-400"
+                    onClick={() => setCreationTab("components")}
+                    className={`whitespace-nowrap px-3 md:px-4 py-2 rounded-lg text-[13px] md:text-sm font-medium transition-all ${
+                      creationTab === "components"
+                        ? "bg-white/[0.06] text-white"
+                        : "text-white/30 hover:text-white hover:bg-white/[0.02]"
                     }`}
                   >
-                    Design
+                    Components
                   </button>
                 </div>
 
@@ -789,7 +818,7 @@ Brand voice: Professional and minimalist..."
                         to={`/app/project/${project.id}`}
                         className="group bg-[#111115] border border-white/[0.06] rounded-xl overflow-hidden hover:border-white/20 transition-all duration-300"
                       >
-                        <div className="aspect-[16/10] bg-[#0B0B0F] border-b border-white/[0.02] flex items-center justify-center relative overflow-hidden">
+                        <div className="aspect-[16/10] bg-[#0B0F0F] border-b border-white/[0.02] flex items-center justify-center relative overflow-hidden">
                           <div className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity bg-gradient-to-br from-white/20 to-transparent" />
                           <FolderKanban className="w-10 h-10 text-white/5 group-hover:text-white/10 transition-all duration-500 scale-100 group-hover:scale-110" />
                         </div>
@@ -828,7 +857,7 @@ Brand voice: Professional and minimalist..."
                       key={tpl}
                       className="cursor-pointer group bg-[#111115] border border-white/[0.06] rounded-xl overflow-hidden hover:border-white/20 transition-all duration-300"
                     >
-                      <div className="aspect-[16/10] bg-[#0B0B0F] border-b border-white/[0.02] flex items-center justify-center">
+                      <div className="aspect-[16/10] bg-[#0B0F0F] border-b border-white/[0.02] flex items-center justify-center">
                         <Plus className="w-8 h-8 text-white/5 group-hover:text-white/20 transition-all duration-500 group-hover:rotate-90" />
                       </div>
                       <div className="p-5">

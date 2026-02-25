@@ -72,25 +72,26 @@ const ProjectView = () => {
   const ModelIcon = modelIcons[project.model || "GPT-4o"] || Zap;
 
   return (
-    <div className="min-h-screen bg-[#0B0B0F] text-white selection:bg-white/10 font-sans">
-      {/* Background Dotted Grid */}
+    <div className="min-h-screen bg-black text-white selection:bg-white/10 font-sans relative overflow-x-hidden">
+      {/* Background Dotted Grid - Increased visibility & precise centering */}
       <div 
-        className="fixed inset-0 z-0 pointer-events-none opacity-[0.1]" 
+        className="fixed inset-0 z-0 pointer-events-none" 
         style={{ 
           backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.2) 1px, transparent 1px)`, 
-          backgroundSize: '24px 24px' 
+          backgroundSize: '24px 24px',
+          backgroundPosition: 'center'
         }} 
       />
 
-      <nav className="relative z-10 border-b border-white/[0.06] bg-[#0B0B0F]/80 backdrop-blur-xl px-6 py-4">
+      <nav className="relative z-10 border-b border-white/[0.06] bg-[#0B0B0F]/80 backdrop-blur-xl px-4 md:px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link to="/app" className="p-2 hover:bg-white/5 rounded-lg transition-all text-white/40 hover:text-white">
+          <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
+            <Link to="/app" className="p-2 hover:bg-white/5 rounded-lg transition-all text-white/40 hover:text-white shrink-0">
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div className="h-4 w-[1px] bg-white/[0.1]" />
-            <div>
-              <h1 className="text-sm font-bold tracking-tight">{project.name}</h1>
+            <div className="h-4 w-[1px] bg-white/[0.1] shrink-0" />
+            <div className="min-w-0">
+              <h1 className="text-sm font-bold tracking-tight truncate">{project.name}</h1>
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="text-[10px] text-white/20 font-bold uppercase tracking-widest leading-none">
                   {new Date(project.created_at).toLocaleDateString()}
@@ -108,14 +109,14 @@ const ProjectView = () => {
         </div>
       </nav>
 
-      <main className="relative z-10 max-w-7xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+      <main className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
           {/* Left Column: Briefing */}
-          <div className="lg:col-span-1 space-y-10">
+          <div className="lg:col-span-1 space-y-8 md:space-y-10">
             <section>
               <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-white/20 mb-6">Initial Brief</h2>
-              <div className="p-6 bg-[#111115] border border-white/[0.06] rounded-[24px]">
-                <p className="text-lg text-white/80 leading-relaxed font-medium capitalize">
+              <div className="p-5 md:p-6 bg-[#111115] border border-white/[0.06] rounded-[24px]">
+                <p className="text-base md:text-lg text-white/80 leading-relaxed font-medium capitalize">
                   "{project.prompt}"
                 </p>
               </div>
@@ -146,17 +147,17 @@ const ProjectView = () => {
 
           {/* Right Column: Execution */}
           <div className="lg:col-span-2">
-            <div className="aspect-[16/10] bg-[#111115] border border-white/[0.06] rounded-[32px] overflow-hidden relative shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center text-center p-12">
-              <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-8 relative">
+            <div className="aspect-[16/10] min-h-[300px] bg-[#111115] border border-white/[0.06] rounded-[24px] md:rounded-[32px] overflow-hidden relative shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center text-center p-6 md:p-12">
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 md:mb-8 relative">
                 <div className="absolute inset-0 rounded-full border-2 border-white/10 border-t-white/40 animate-spin" />
-                <Sparkles className="w-8 h-8 text-white/20" />
+                <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-white/20" />
               </div>
-              <h3 className="text-2xl font-bold mb-4">Clonex is Building...</h3>
-              <p className="max-w-md text-white/40 text-sm leading-relaxed mb-10">
+              <h3 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Clonex is Building...</h3>
+              <p className="max-w-md text-white/40 text-[13px] md:text-sm leading-relaxed mb-8 md:mb-10">
                 Our AI agents are analyzing your briefing and initializing the project structure. This workspace will be ready shortly.
               </p>
               
-              <div className="w-full max-w-sm h-1 bg-white/5 rounded-full overflow-hidden">
+              <div className="w-full max-w-[240px] md:max-w-sm h-1 bg-white/5 rounded-full overflow-hidden">
                 <motion.div 
                   initial={{ width: "0%" }}
                   animate={{ width: "65%" }}
@@ -164,7 +165,7 @@ const ProjectView = () => {
                   className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"
                 />
               </div>
-              <div className="flex items-center gap-6 mt-6">
+              <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6 mt-6">
                 <div className="flex items-center gap-2 text-[10px] font-bold text-white/20 uppercase tracking-widest">
                   <div className="w-1 h-1 rounded-full bg-green-500" /> Rendering UI
                 </div>

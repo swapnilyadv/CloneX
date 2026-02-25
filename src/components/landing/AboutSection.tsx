@@ -17,7 +17,7 @@ const features = [
 
 const AboutSection = () => {
   return (
-    <section className="w-full bg-[#000000] border-t border-white/5 py-28 px-6">
+    <section className="w-full border-t border-white/5 py-28 px-6">
       <div className="max-w-6xl mx-auto">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}

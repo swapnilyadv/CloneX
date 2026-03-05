@@ -1,39 +1,40 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import AppDashboard from "./pages/AppDashboard";
-import ProjectView from "./pages/ProjectView";
-import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+import { Routes, Route } from "react-router-dom"
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/app" element={<ProtectedRoute><AppDashboard /></ProtectedRoute>} />
-            <Route path="/app/project/:id" element={<ProtectedRoute><ProjectView /></ProtectedRoute>} />
-            <Route path="/dashboard" element={<ProtectedRoute><AppDashboard /></ProtectedRoute>} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+import Index from "./pages/Index"
+import Login from "./pages/Login"
+import Signup from "./pages/Signup"
+import AppDashboard from "./pages/AppDashboard"
+import ProjectView from "./pages/ProjectView"
+import Workspace from "./pages/Workspace"
+import NotFound from "./pages/NotFound"
 
-export default App;
+function App() {
+
+  return (
+
+    <Routes>
+
+      {/* Landing Website */}
+      <Route path="/" element={<Index />} />
+
+      {/* Auth */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+
+      {/* App */}
+      <Route path="/app" element={<AppDashboard />} />
+      <Route path="/app/project/:id" element={<ProjectView />} />
+      <Route path="/app/workspace/:id" element={<Workspace />} />
+
+      {/* Fallback */}
+      <Route path="*" element={<NotFound />} />
+
+    </Routes>
+
+  )
+
+}
+
+export default App
+

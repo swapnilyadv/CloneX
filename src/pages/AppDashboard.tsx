@@ -86,35 +86,86 @@ const AppDashboard = () => {
     { name: "Custom", icon: Box },
   ];
 
-  const handleCreateProject = async () => {
-    if (!prompt.trim() || !user) return;
+  const handleCreateProject = async (templateId?: string, templateName?: string) => {
+    if (!user) return;
+    if (!templateId && !prompt.trim()) return;
+    
     setLoading(true);
 
-    const name = prompt.length > 40 ? prompt.substring(0, 40) + "…" : prompt;
+    try {
+      const name = templateName || (prompt.length > 40 ? prompt.substring(0, 40) + "…" : prompt);
+      const modelToUse = selectedModel || "GPT-4o";
 
-    const { data, error } = await supabase
-      .from("projects")
-      .insert({ 
-        user_id: user.id, 
-        name, 
-        prompt,
-        model: selectedModel,
-        attachments: attachments.map(a => ({ type: a.type, value: a.value, name: a.name }))
-      })
-      .select()
-      .single();
+      const { data, error } = await supabase
+        .from("projects")
+        .insert({ 
+          user_id: user.id, 
+          name, 
+          prompt: templateId ? `Template: ${templateName}` : prompt,
+          model: modelToUse,
+          status: templateId ? 'ready' : 'building',
+          attachments: attachments.map(a => ({ type: a.type, value: a.value, name: a.name }))
+        })
+        .select()
+        .single();
 
-    setLoading(false);
+      if (error) throw error;
 
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-      return;
+      if (templateId) {
+        // For templates, call the backend to get the files immediately
+        const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:5000/api/build-project' : '/api/build-project';
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ templateId })
+        });
+        const templateData = await response.json();
+        
+        if (templateData.files) {
+          await supabase
+            .from("projects")
+            .update({ files: templateData.files })
+            .eq("id", data.id);
+        }
+      }
+
+      setPrompt("");
+      setAttachments([]);
+      
+      if (data) {
+        navigate(`/app/project/${data.id}`, { 
+          state: { 
+            isNewProject: !templateId,
+            templateId 
+          } 
+        });
+      }
+    } catch (err: any) {
+      console.error("Creation failed:", err);
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
+  };
 
-    setPrompt("");
-    setAttachments([]);
-    if (data) {
-      navigate(`/app/project/${data.id}`);
+  const handleDeleteProject = async (projectId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!confirm("Delete this project? This action cannot be undone.")) return;
+
+    try {
+      const { error } = await supabase
+        .from("projects")
+        .delete()
+        .eq("id", projectId);
+
+      if (error) throw error;
+
+      setProjects(prev => prev.filter(p => p.id !== projectId));
+      toast({ title: "Project deleted" });
+    } catch (err: any) {
+      toast({ title: "Delete failed", description: err.message, variant: "destructive" });
     }
   };
 
@@ -616,31 +667,6 @@ Brand voice: Professional and minimalist..."
               </h1>
               
               <div className="w-full max-w-full md:max-w-3xl bg-[#111115] border border-white/[0.08] rounded-[22px] md:rounded-[24px] overflow-hidden shadow-2xl shadow-black/40 transition-all duration-300">
-                {/* Tabs */}
-                <div className="flex items-center px-3 md:px-4 pt-4 gap-1 md:gap-1.5 overflow-x-auto no-scrollbar">
-                  <button
-                    onClick={() => setCreationTab("build")}
-                    className={`whitespace-nowrap px-3 md:px-4 py-2 rounded-lg text-[13px] md:text-sm font-medium transition-all ${
-                      creationTab === "build"
-                        ? "bg-white/[0.06] text-white"
-                        : "text-white/30 hover:text-white hover:bg-white/[0.02]"
-                    }`}
-                  >
-                    Build from scratch
-                  </button>
-                  <button
-                    onClick={() => setCreationTab("components")}
-                    className={`whitespace-nowrap px-3 md:px-4 py-2 rounded-lg text-[13px] md:text-sm font-medium transition-all ${
-                      creationTab === "components"
-                        ? "bg-white/[0.06] text-white"
-                        : "text-white/30 hover:text-white hover:bg-white/[0.02]"
-                    }`}
-                  >
-                    Components
-                  </button>
-                </div>
-
-                {/* Main Input Area */}
                 <div className="px-5 py-2">
                   <textarea
                     value={prompt}
@@ -799,13 +825,6 @@ Brand voice: Professional and minimalist..."
                     </button>
                   ))}
                 </div>
-
-                <Link
-                  to="/app/projects"
-                  className="text-sm font-semibold text-white/60 hover:text-white transition-colors"
-                >
-                  View all projects
-                </Link>
               </div>
 
               {/* Grid */}
@@ -813,28 +832,37 @@ Brand voice: Professional and minimalist..."
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {projects.length > 0 ? (
                     projects.map((project) => (
-                      <Link
-                        key={project.id}
-                        to={`/app/project/${project.id}`}
-                        className="group bg-[#111115] border border-white/[0.06] rounded-xl overflow-hidden hover:border-white/20 transition-all duration-300"
-                      >
-                        <div className="aspect-[16/10] bg-[#0B0F0F] border-b border-white/[0.02] flex items-center justify-center relative overflow-hidden">
-                          <div className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity bg-gradient-to-br from-white/20 to-transparent" />
-                          <FolderKanban className="w-10 h-10 text-white/5 group-hover:text-white/10 transition-all duration-500 scale-100 group-hover:scale-110" />
-                        </div>
-                        <div className="p-5">
-                          <div className="flex items-center justify-between gap-4 mb-2">
-                            <h3 className="text-sm font-medium truncate text-white group-hover:text-white transition-colors">
-                              {project.name}
-                            </h3>
-                            {project.starred && <Star className="w-3.5 h-3.5 text-yellow-500/80 fill-yellow-500/20" />}
+                      <div key={project.id} className="block w-full">
+                        <Link
+                          to={`/app/project/${project.id}`}
+                          className="group block bg-[#111115] border border-white/[0.06] rounded-xl overflow-hidden hover:border-white/20 transition-all duration-300"
+                        >
+                          <div className="aspect-[16/10] bg-[#0B0F0F] border-b border-white/[0.02] flex items-center justify-center relative overflow-hidden">
+                            <div className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity bg-gradient-to-br from-white/20 to-transparent" />
+                            <FolderKanban className="w-10 h-10 text-white/5 group-hover:text-white/10 transition-all duration-500 scale-100 group-hover:scale-110" />
                           </div>
-                          <div className="flex items-center justify-between text-[11px] text-white/30 uppercase tracking-wider font-semibold">
-                            <span>{new Date(project.created_at).toLocaleDateString()}</span>
-                            <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                          <div className="p-5 relative">
+                            <div className="flex items-center justify-between gap-4 mb-2">
+                              <h3 className="text-sm font-medium truncate text-white group-hover:text-white transition-colors">
+                                {project.name}
+                              </h3>
+                              <div className="flex items-center gap-2">
+                                {project.starred && <Star className="w-3.5 h-3.5 text-yellow-500/80 fill-yellow-500/20" />}
+                                <button 
+                                  onClick={(e) => handleDeleteProject(project.id, e)}
+                                  className="p-1 px-1.5 hover:bg-red-500/10 rounded-md text-white/10 hover:text-red-500/60 transition-all opacity-0 group-hover:opacity-100"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between text-[11px] text-white/30 uppercase tracking-wider font-semibold">
+                              <span>{new Date(project.created_at).toLocaleDateString()}</span>
+                              <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                            </div>
                           </div>
-                        </div>
-                      </Link>
+                        </Link>
+                      </div>
                     ))
                   ) : (
                     <div className="col-span-full py-20 bg-[#111115] rounded-xl border border-dashed border-white/10 flex flex-col items-center justify-center text-center">
@@ -846,22 +874,20 @@ Brand voice: Professional and minimalist..."
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {[
-                    "SaaS Landing Page",
-                    "AI Tool Dashboard",
-                    "E-commerce Storefront",
-                    "Blog Engine",
-                    "Portfolio Workspace",
-                    "Social Feed UI",
+                    { id: "saas", name: "SaaS Landing Page" },
+                    { id: "ecommerce", name: "E-commerce Store" },
+                    { id: "portfolio", name: "Portfolio Website" }
                   ].map((tpl) => (
                     <div
-                      key={tpl}
+                      key={tpl.id}
+                      onClick={() => handleCreateProject(tpl.id, tpl.name)}
                       className="cursor-pointer group bg-[#111115] border border-white/[0.06] rounded-xl overflow-hidden hover:border-white/20 transition-all duration-300"
                     >
                       <div className="aspect-[16/10] bg-[#0B0F0F] border-b border-white/[0.02] flex items-center justify-center">
                         <Plus className="w-8 h-8 text-white/5 group-hover:text-white/20 transition-all duration-500 group-hover:rotate-90" />
                       </div>
                       <div className="p-5">
-                        <h3 className="text-sm font-medium text-white mb-1">{tpl}</h3>
+                        <h3 className="text-sm font-medium text-white mb-1">{tpl.name}</h3>
                         <p className="text-[11px] text-white/30 uppercase tracking-wider font-semibold group-hover:text-white/50 transition-colors">Use Template</p>
                       </div>
                     </div>

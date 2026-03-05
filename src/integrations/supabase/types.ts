@@ -50,6 +50,10 @@ export type Database = {
           starred: boolean
           updated_at: string
           user_id: string
+          status: string
+          files: any
+          model: string
+          attachments: any
         }
         Insert: {
           created_at?: string
@@ -59,6 +63,10 @@ export type Database = {
           starred?: boolean
           updated_at?: string
           user_id: string
+          status?: string
+          files?: any
+          model?: string
+          attachments?: any
         }
         Update: {
           created_at?: string
@@ -68,6 +76,10 @@ export type Database = {
           starred?: boolean
           updated_at?: string
           user_id?: string
+          status?: string
+          files?: any
+          model?: string
+          attachments?: any
         }
         Relationships: []
       }
